@@ -1,0 +1,33 @@
+/* Full page background image */
+.landing-container {
+  position: relative;
+  height: 100vh; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-image: url("../src/images/intro-img.png"); /* Replace with your background image */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-position: center;
+} 
+
+.background-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; 
+  background-image: url("../src/images/intro-img.png"); /* Replace with your background image */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Centered Image */
+.start-gif1 {
+  width: 200px;
+  height: 200px;
+  background-image: url("../src/images/game-control.gif");
+  cursor: pointer;
+}

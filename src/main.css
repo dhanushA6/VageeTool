@@ -1,0 +1,99 @@
+body {
+  background-image: url("../src/images/start.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.top-left-gif {
+  position: absolute;
+  top: -66px;
+  left: 5px;
+  width: 60px;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out;
+}
+
+.second-image-container {
+  position: fixed;
+  top: 33%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.second-image {
+  width: 700px;
+  height: 400px;
+  object-fit: fit;
+}
+
+.close-button {
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+}
+
+.final-score-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1000;
+}
+
+.final-score-image {
+  width: 840px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.final-score {
+  position: absolute;
+  top: 51%;
+  left: 47%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  font-weight: bold;
+  color: black;
+}
+
+.mute-button {
+  position: absolute;
+  bottom: 118px;
+  right: 12px;
+}
+
+.mute-icon {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+}
+
+
+
