@@ -9,11 +9,11 @@ const KeystrokeHint = ({ showKeystrokes, currentTamilChar, currentKeystroke, isk
       
       <div className="hint-content">
         <span className="tamil-char">
-          {currentTamilChar === " " ? "Space" : currentTamilChar}
+          {currentTamilChar === " " ? "Press Space" : currentTamilChar}
         </span>
-        <span className="arrow">→</span>
+        {currentTamilChar === " " ? <></>: <span className="arrow">→</span>}
         <span className="english-keys">
-          {iskeyBoardEnabled ? currentKeystroke : currentKeystrokes}
+          {iskeyBoardEnabled ? currentKeystroke : currentKeystrokes != "Space" ? currentKeystrokes:"" }
         </span>
       </div>
     </div>

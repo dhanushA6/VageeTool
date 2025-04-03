@@ -16,7 +16,7 @@ const levels = [
       "id": 3,
       "title": "Simple Words",
       "description": "Practice typing simple Tamil words",
-      "text": "அம்மா அப்பா குட்டி பட்டி மலை நிலா வானம்"
+      "text": "மஞ்சல் மன்றம் அம்மா அப்பா குட்டி படி மலை நிலா வானம் சட்டம்"
     },
     {
       "id": 4,
