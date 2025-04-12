@@ -6,7 +6,7 @@ import timer from "../images/timer.png"
 import acc from "../images/accuracy.png"
 
 
-const StatsBar = ({ wpm, cpm, accuracy, remainingTime, level }) => {
+const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -14,7 +14,6 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, level }) => {
       .toString()
       .padStart(2, "0")}`;
   };
-
   return (
     <div className="stats-bar">
       <div className="logo-container">
@@ -28,7 +27,7 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, level }) => {
       <div className="stats-container"> 
         <div className="stats-bar__item">
           <img src={timer} alt="Time" className="stats-bar__icon" />
-          <span className="stats-bar__label">நேரம்:</span>
+          <span className="stats-bar__label"></span>
           <span
             className={`stats-bar__value ${
               remainingTime < 30 ? "stats-bar__value--critical" : ""
@@ -37,27 +36,29 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, level }) => {
             {formatTime(remainingTime)}
           </span>
         </div>
-          
-        {level <= 3 ? (
+        {(iskeyBoardEnabled == false)? (
           <div className="stats-bar__item">
             <img src={speed} alt="Speed" className="stats-bar__icon" />
-            <span className="stats-bar__label"> வார்த்தைகள்/நிமிட:</span>
+            <span className="stats-bar__label"> </span>
             <span className="stats-bar__value">{wpm}</span>
           </div>
         ) : (
           <div className="stats-bar__item">
             <img src={speed} alt="Speed" className="stats-bar__icon" />
-            <span className="stats-bar__label"> எழுத்துகள்/நிமிட:</span>
+            <span className="stats-bar__label"></span>
             <span className="stats-bar__value">{cpm}</span>
           </div>
         )}
 
-        <div className="stats-bar__item">
-          <img src={acc} alt="Accuracy" className="stats-bar__icon" />
-          <span className="stats-bar__label">துல்லியம்:</span>
-          <span className="stats-bar__value">{accuracy}%</span>
-        </div>
-      </div>
+      {!iskeyBoardEnabled &&
+            ( <div className="stats-bar__item">
+              <img src={acc} alt="Accuracy" className="stats-bar__icon" />
+              <span className="stats-bar__label"></span>
+              <span className="stats-bar__value">{accuracy}%</span>
+            </div>
+         )
+      }
+       </div>
     </div>
   );
 };

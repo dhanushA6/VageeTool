@@ -33,8 +33,7 @@ const LevelSelect = ({ onStart, onLevelChange }) => {
   return (
     <div className="level-select-overlay">
       <div className="level-select-card">
-        <h2>Select a Level</h2>
-        
+ 
         <div className="level-dropdown">
           <label htmlFor="level-select">Choose Level:</label>
           <select 

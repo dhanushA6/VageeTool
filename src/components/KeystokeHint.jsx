@@ -2,7 +2,7 @@
 import React from "react";
 
 const KeystrokeHint = ({ showKeystrokes, currentTamilChar, currentKeystroke, iskeyBoardEnabled, currentKeystrokes }) => {
-  if (!showKeystrokes || !currentTamilChar) return null;
+  if (!showKeystrokes || !currentTamilChar || !iskeyBoardEnabled) return null;
 
   return (
     <div className="current-keystroke-hint">
