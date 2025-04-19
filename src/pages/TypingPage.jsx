@@ -14,7 +14,8 @@ import LevelSelect from "../components/Level";
 
 import CurrentTamilText from "../components/CurrentTamilText";
 import TargetText from "../components/TargetText";
-import KeystrokeHint from "../components/KeystokeHint";
+import KeystrokeHint from "../components/KeystokeHint"; 
+import PauseOverlay from "../components/PauseOverlay";
 // Create a reverse mapping for checking valid inputs
 const reverseMapping = {};
 Object.entries(tamilMapping).forEach(([english, tamil]) => {
@@ -36,7 +37,9 @@ const TamilTypingTool = () => {
   const [userBackspaces, setUserBackspaces] = useState(0);
   const [currentTamilText, setCurrentTamilText] = useState("");
   const [showKeystrokes, setShowKeystrokes] = useState(true);
-  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const [currentCharIndex, setCurrentCharIndex] = useState(0); 
+
+  const [isPaused, setIsPaused] = useState(false);
 
   // Change to a countdown timer
   const INITIAL_TIME_SECONDS = 600; // 10 minutes by default
@@ -85,6 +88,7 @@ const TamilTypingTool = () => {
     setCurrentLevel(level);
     setTargetText(level.text);
     setGameState("playing");
+    setIsPaused(false);
 
     // Reset all typing-related states
     setUserInput("");
@@ -106,7 +110,16 @@ const TamilTypingTool = () => {
     setCharErrors({});
     setCharSuccess({});
 
-    setIskeyBoardEnabled(level.id <= 3);
+    setIskeyBoardEnabled(level.id <= 3); 
+    const tamilChars = parseTamilText(level.text) || [];
+  const initialFeedback = tamilChars.map((char) => ({
+    char: char || '',
+    status: "pending",
+    keystrokes: getKeystrokesForTamil(char) || "N/A",
+  }));
+  setFeedback(initialFeedback);
+  setTotalCount(tamilChars.length); 
+  
   };
 
   const completeGame = () => {
@@ -152,31 +165,38 @@ const TamilTypingTool = () => {
       // Go back to level select
       setGameState("levelSelect");
     }
-  };
+  }; 
+
+
 
   // Function to parse Tamil text into characters
   const parseTamilText = (text) => {
     if (!text) return [];
-
+  
     const result = [];
     let i = 0;
-
+  
     while (i < text.length) {
-      if (text[i] === " ") {
-        result.push(" ");
-        i += 1;
-      } else if (
-        i + 1 < text.length &&
-        /[\u0bbe-\u0bcd\u0bd7]/.test(text[i + 1])
-      ) {
-        result.push(text[i] + text[i + 1]);
-        i += 2;
-      } else {
-        result.push(text[i]);
-        i += 1;
+      try {
+        if (text[i] === " ") {
+          result.push(" ");
+          i += 1;
+        } else if (
+          i + 1 < text.length &&
+          /[\u0bbe-\u0bcd\u0bd7]/.test(text[i + 1])
+        ) {
+          result.push(text[i] + text[i + 1]);
+          i += 2;
+        } else {
+          result.push(text[i]);
+          i += 1;
+        }
+      } catch (error) {
+        console.error("Error parsing Tamil text:", error);
+        i += 1; // Skip problematic character
       }
     }
-
+  
     return result;
   };
 
@@ -212,11 +232,11 @@ const TamilTypingTool = () => {
     // setCharSuccess({});
 
     // Initialize feedback based on target text
-    const tamilChars = parseTamilText(targetText);
+    const tamilChars = parseTamilText(targetText) || [];
     const initialFeedback = tamilChars.map((char) => ({
-      char,
+      char: char || '',
       status: "pending",
-      keystrokes: getKeystrokesForTamil(char),
+      keystrokes: getKeystrokesForTamil(char) || "N/A",
     }));
     setFeedback(initialFeedback);
     setTotalCount(tamilChars.length);
@@ -277,7 +297,34 @@ const TamilTypingTool = () => {
     isCompleted,
     keyFeedback,
     shiftOn,
-  ]);
+  ]); 
+
+  const handlePause = () => {
+    setIsPaused(true);
+    clearInterval(timerRef.current);
+  };
+
+  const handleResume = () => {
+    setIsPaused(false);
+    if (isTyping && !isCompleted && !isTimeUp) {
+      timerRef.current = setInterval(() => {
+        setRemainingTime((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            setIsTimeUp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+   
+
+  const handleRestart = () => {
+    setIsPaused(false);
+    retryLevel();
+  };
 
   const tamilToKeystrokes = (tamilText) => {
     const tamilChars = parseTamilText(tamilText);
@@ -398,94 +445,121 @@ const TamilTypingTool = () => {
   
 
   const handleKeyPress = (key) => {
-    if (!iskeyBoardEnabled || isCompleted || isTimeUp || gameState != "playing") return;
-
+    // Early return checks
+    if (!iskeyBoardEnabled || isCompleted || isTimeUp || gameState !== "playing") {
+      return;
+    }
+  
     // Start timer on first keystroke
     if (!isTyping && !isCompleted && !isTimeUp) {
       setIsTyping(true);
     }
-
-    // Prevent default behavior for space key to avoid toggling
+  
+    // Prevent default behavior for space key
     if (key === " ") {
-      // Prevent the default space bar behavior which might affect toggles
       document.activeElement.blur();
     }
-
-    // Get current sequence and expected key
-    if (currentItemIndex >= keystrokeSequence.length) {
-      return; // All characters have been typed
+  
+    // Safety checks for arrays and indices
+    if (
+      !Array.isArray(keystrokeSequence) ||
+      !Array.isArray(feedback) ||
+      currentItemIndex >= keystrokeSequence.length ||
+      currentItemIndex >= feedback.length
+    ) {
+      console.warn("Invalid state in handleKeyPress");
+      return;
     }
-
+  
     const currentSequence = keystrokeSequence[currentItemIndex];
+    if (!Array.isArray(currentSequence)) {
+      console.warn("Invalid sequence at currentItemIndex");
+      return;
+    }
+  
+    // Check if we've exceeded current sequence bounds
+    if (currentKeyIndex >= currentSequence.length) {
+      console.warn("Current key index out of bounds");
+      return;
+    }
+  
     const expectedKey = currentSequence[currentKeyIndex];
-
-
+    const tamilChars = parseTamilText(targetText) || [];
+    const currentTamilChar = tamilChars[currentItemIndex];
+  
     if (key === expectedKey) {
       // Correct key pressed
       showKeyFeedback(key, "correct");
-
-      // Update feedback array to mark progress
-      const newFeedback = [...feedback];
-
+  
+      // Create new feedback array with immutability
+      const newFeedback = feedback.map((item, index) => {
+        if (index === currentItemIndex) {
+          return {
+            ...item,
+            status: currentKeyIndex === currentSequence.length - 1 ? "correct" : item.status
+          };
+        }
+        return item;
+      });
+  
       // If this is the last key in the sequence for this Tamil character
       if (currentKeyIndex === currentSequence.length - 1) {
-        // Mark the entire character as correct
-        newFeedback[currentItemIndex].status = "correct";
-        setCorrectCount((prevCount) => prevCount + 1);
-
         // Update character success tracking
-        const tamilChar = parseTamilText(targetText)[currentItemIndex];
-        if (tamilChar !== " ") {
+        if (currentTamilChar && currentTamilChar !== " ") {
           setCharSuccess((prev) => ({
             ...prev,
-            [tamilChar]: (prev[tamilChar] || 0) + 1,
+            [currentTamilChar]: (prev[currentTamilChar] || 0) + 1,
           }));
         }
-
+  
         // Move to the next Tamil character
         setCurrentItemIndex((prev) => prev + 1);
         setCurrentKeyIndex(0);
-
-        // Update current character index for the display
-        setCurrentCharIndex(currentItemIndex + 1);
-
+  
+        // Update current character index for display
+        setCurrentCharIndex((prev) => prev + 1);
+  
         // Update the Tamil text being built
-        const tamilChars = parseTamilText(targetText);
-        setCurrentTamilText((prev) => prev + tamilChars[currentItemIndex]);
+        setCurrentTamilText((prev) => {
+          const newText = prev + (currentTamilChar || '');
+          return newText;
+        });
+  
+        // Update correct count if we completed a character
+        setCorrectCount((prev) => prev + 1);
       } else {
         // Move to next key in the same sequence
         setCurrentKeyIndex((prev) => prev + 1);
       }
-
+  
       setFeedback(newFeedback);
-
+  
       // Check if completed
       if (
-        (currentItemIndex >= keystrokeSequence.length - 1 &&
-        currentKeyIndex === currentSequence.length - 1) || isTimeUp
+        currentItemIndex >= keystrokeSequence.length - 1 &&
+        currentKeyIndex === currentSequence.length - 1
       ) {
-        
         updateMetrics();
         setIsCompleted(true);
         completeGame();
         clearInterval(timerRef.current);
       }
     } else {
-      // Incorrect key pressed - show error feedback but don't change the state
+      // Incorrect key pressed
       showKeyFeedback(key, "incorrect");
+      
       // Update error tracking for the current Tamil character
-      const tamilChar = parseTamilText(targetText)[currentItemIndex];
-      if (tamilChar !== " ") {
+      if (currentTamilChar && currentTamilChar !== " ") {
         setCharErrors((prev) => ({
           ...prev,
-          [tamilChar]: (prev[tamilChar] || 0) + 1,
+          [currentTamilChar]: (prev[currentTamilChar] || 0) + 1,
         }));
       }
     }
-
+  
     // Update metrics after each keystroke
     updateMetrics();
-
+  
     // Handle Shift release
     if (shiftOn && key !== "Shift") {
       setShiftOn(false);
@@ -655,7 +729,7 @@ const TamilTypingTool = () => {
   };
 
   const handleKeyDown = (e) => {
-    if (isCompleted || isTimeUp) return;
+    if (isCompleted || isTimeUp || isPaused) return;
    
      
       // Ignore arrow keys completely
@@ -691,36 +765,33 @@ const TamilTypingTool = () => {
 
   const handleBackspace = () => {
     if (!iskeyBoardEnabled || isCompleted || isTimeUp) return;
-
+  
     setUserBackspaces((prevCount) => prevCount + 1);
-
-    // If we're in the middle of typing a multi-key sequence for a character
+  
     if (currentKeyIndex > 0) {
-      // Go back one key in the current sequence
       setCurrentKeyIndex((prev) => prev - 1);
     }
-    // If we're at the start of a character sequence but not the first character
     else if (currentItemIndex > 0) {
-      // Go back to the previous character
       setCurrentItemIndex((prev) => prev - 1);
-      // And to the last key in its sequence
-      const prevSequence = keystrokeSequence[currentItemIndex - 1];
+      const prevSequence = keystrokeSequence[currentItemIndex - 1] || [];
       setCurrentKeyIndex(prevSequence.length - 1);
-
-      // Update the feedback to mark the character as pending again
+  
       const newFeedback = [...feedback];
-      newFeedback[currentItemIndex - 1].status = "pending";
+      if (newFeedback[currentItemIndex - 1]) {
+        newFeedback[currentItemIndex - 1] = {
+          ...newFeedback[currentItemIndex - 1],
+          status: "pending"
+        };
+      }
       setFeedback(newFeedback);
-
-      // Update the Tamil text being built (remove last character)
+  
       setCurrentTamilText((prev) => {
-        const tamilChars = parseTamilText(prev);
+        const tamilChars = parseTamilText(prev) || [];
         return tamilChars.slice(0, -1).join("");
       });
-
-      // Update character index and correct count
+  
       setCurrentCharIndex((prev) => prev - 1);
-      setCorrectCount((prev) => prev - 1);
+      setCorrectCount((prev) => Math.max(0, prev - 1));
     }
   };
 
@@ -932,7 +1003,7 @@ const TamilTypingTool = () => {
   }, [userInput, targetText, isTyping, iskeyBoardEnabled]);
 
   const handleInputChange = (e) => {
-    if (iskeyBoardEnabled) return;
+    if (iskeyBoardEnabled || isPaused) return;
 
     // Start the timer when user starts typing
     if (!isTyping && !isCompleted && !isTimeUp) {
@@ -1030,12 +1101,13 @@ const TamilTypingTool = () => {
       {gameState === "playing" && (
         <div className="game-container">
           <StatsBar
-            wpm={wpm}
-            cpm={cpm}
-            accuracy={accuracy}
-            remainingTime={remainingTime}
-            iskeyBoardEnabled={iskeyBoardEnabled}
-          />
+  wpm={wpm}
+  cpm={cpm}
+  accuracy={accuracy}
+  remainingTime={remainingTime}
+  iskeyBoardEnabled={iskeyBoardEnabled}
+  onPause={handlePause}
+/>
 
           <div className="card">
             <TargetText
@@ -1101,6 +1173,13 @@ const TamilTypingTool = () => {
           }}
           onRetry={retryLevel}
           onNextLevel={nextLevel}
+        />
+      )} 
+
+      {isPaused && (
+        <PauseOverlay 
+          onResume={handleResume}
+          onRestart={handleRestart}
         />
       )}
     </div>

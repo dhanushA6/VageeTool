@@ -4,9 +4,9 @@ import speed from "../images/speed.png"
 import tool from "../images/toolLogo.png" 
 import timer from "../images/timer.png" 
 import acc from "../images/accuracy.png"
+import pauseIcon from "../images/pause.png"; // You'll need to add a pause icon
 
-
-const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled }) => {
+const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onPause }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -14,6 +14,7 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled }) => {
       .toString()
       .padStart(2, "0")}`;
   };
+  
   return (
     <div className="stats-bar">
       <div className="logo-container">
@@ -50,17 +51,20 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled }) => {
           </div>
         )}
 
-      {!iskeyBoardEnabled &&
-            ( <div className="stats-bar__item">
-              <img src={acc} alt="Accuracy" className="stats-bar__icon" />
-              <span className="stats-bar__label"></span>
-              <span className="stats-bar__value">{accuracy}%</span>
-            </div>
-         )
-      }
-       </div>
+        {!iskeyBoardEnabled && (
+          <div className="stats-bar__item">
+            <img src={acc} alt="Accuracy" className="stats-bar__icon" />
+            <span className="stats-bar__label"></span>
+            <span className="stats-bar__value">{accuracy}%</span>
+          </div>
+        )}
+      </div>
+      
+      <button className="pause-button" onClick={onPause}>
+        <img src={pauseIcon} alt="Pause" className="pause-icon" />
+      </button>
     </div>
   );
 };
 
-export default StatsBar;
+export default StatsBar; 
