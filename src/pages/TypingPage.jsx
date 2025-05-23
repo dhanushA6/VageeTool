@@ -11,12 +11,14 @@ import StatsBar from "../components/statusBar";
 import AnalysisBar from "../components/AnalysisBar";
 import levels from "../data/levels";
 import LevelSelect from "../components/Level";
-
 import CurrentTamilText from "../components/CurrentTamilText";
 import TargetText from "../components/TargetText";
 import KeystrokeHint from "../components/KeystokeHint"; 
 import PauseOverlay from "../components/PauseOverlay";
+import PerformanceOverlay from '../components/PerformanceOverlay';
 // Create a reverse mapping for checking valid inputs
+
+
 const reverseMapping = {};
 Object.entries(tamilMapping).forEach(([english, tamil]) => {
   if (!reverseMapping[tamil]) {
@@ -28,7 +30,6 @@ Object.entries(tamilMapping).forEach(([english, tamil]) => {
 const TamilTypingTool = () => {
   const [currentLevel, setCurrentLevel] = useState(1);
   const [gameState, setGameState] = useState("levelSelect");
-
   const [targetText, setTargetText] = useState("வணக்கம் உலகம்");
   const [userInput, setUserInput] = useState("");
   const [feedback, setFeedback] = useState([]);
@@ -55,6 +56,7 @@ const TamilTypingTool = () => {
   // Character error and success tracking - reset when changing text
   const [charErrors, setCharErrors] = useState({});
   const [charSuccess, setCharSuccess] = useState({});
+  const [visitedPositions, setVisitedPositions] = useState(new Set());
 
   const [iskeyBoardEnabled, setIskeyBoardEnabled] = useState(true);
   const [keystrokeSequence, setKeystrokeSequence] = useState([]);
@@ -71,15 +73,9 @@ const TamilTypingTool = () => {
   const keyFeedbackTimerRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Sample Tamil paragraphs for practice
-  const sampleTexts = [
-    "வணக்கம் உலகம்",
-    "தமிழ் மொழி மிகவும் பழமையான மொழி",
-    "நான் தமிழில் எழுத கற்றுக்கொள்கிறேன்",
-    "இந்தியாவில் பல மொழிகள் பேசப்படுகின்றன",
-    "ஆ",
-  ];
-
+  const [showPerformanceOverlay, setShowPerformanceOverlay] = useState(false);
+  const [currentLevelMistakes, setCurrentLevelMistakes] = useState({});
+  const [currentLevelCorrect, setCurrentLevelCorrect] = useState({});
 
   // Initialize game with level
   const startGame = async (level) => {
@@ -109,6 +105,9 @@ const TamilTypingTool = () => {
     setAccuracy(100);
     setCharErrors({});
     setCharSuccess({});
+    setVisitedPositions(new Set());
+    setCurrentLevelMistakes({});
+    setCurrentLevelCorrect({});
 
     setIskeyBoardEnabled(level.id <= 3); 
     const tamilChars = parseTamilText(level.text) || [];
@@ -125,7 +124,6 @@ const TamilTypingTool = () => {
   const completeGame = () => {
     // First update all metrics
     updateMetrics();
-
     // Then stop the timer and set completion state
     clearInterval(timerRef.current);
     setIsCompleted(true);
@@ -172,7 +170,7 @@ const TamilTypingTool = () => {
   // Function to parse Tamil text into characters
   const parseTamilText = (text) => {
     if (!text) return [];
-  
+
     const result = [];
     let i = 0;
   
@@ -225,11 +223,6 @@ const TamilTypingTool = () => {
     setIsCompleted(false);
     setIsTimeUp(false);
     setRemainingTime(INITIAL_TIME_SECONDS);
-    // setWpm(0);
-    // setCpm(0);
-    // setAccuracy(100);
-    // setCharErrors({});
-    // setCharSuccess({});
 
     // Initialize feedback based on target text
     const tamilChars = parseTamilText(targetText) || [];
@@ -333,16 +326,24 @@ const TamilTypingTool = () => {
       const char = tamilChars[i];
       const vallinamLetters = ["க்", "ச்", "ட்", "த்", "ப்", "ற்", " "];
       const prevChar = i > 0 ? tamilChars[i - 1] : null;
+      const nexChar = i <tamilChars.length-1? tamilChars[i +1] : null;
       if (char === " ") {
         keystrokeSequence.push([" "]);
         continue;
       } 
       const taLetters = ["ட", "டா", "டி", "டீ", "டு", "டூ", "டெ", "டே", "டை", "டொ", "டோ", "டௌ"];
       const dhaLetters =["த", "தா", "தி", "தீ", "து", "தூ", "தெ", "தே", "தை", "தொ", "தோ", "தௌ"]; 
-      const paLetters = [ "ப", "பா", "பி", "பீ", "பு", "பூ", "பெ", "பே", "பை", "பொ", "போ", "பௌ"] 
-      const RaLetters = ["ற", "றா", "றி", "றீ", "று", "றூ", "றெ", "றே", "றை", "றொ", "றோ", "றௌ"] 
-      const chaLetters = ["ச", "சா", "சி", "சீ", "சு", "சூ", "செ", "சே", "சை", "சொ", "சோ", "சௌ"]
+      const paLetters = [ "ப", "பா", "பி", "பீ", "பு", "பூ", "பெ", "பே", "பை", "பொ", "போ", "பௌ"]; 
+      const RaLetters = ["ற", "றா", "றி", "றீ", "று", "றூ", "றெ", "றே", "றை", "றொ", "றோ", "றௌ"];
+      const chaLetters = ["ச", "சா", "சி", "சீ", "சு", "சூ", "செ", "சே", "சை", "சொ", "சோ", "சௌ"];
+      const kaLetters =  ['க', 'கா', 'கி', 'கீ', 'கு', 'கூ', 'கெ', 'கே', 'கை', 'கொ', 'கோ', 'கௌ'];
+      const naLetters = ['ந', 'நா', 'நி', 'நீ', 'நு', 'நூ', 'நெ', 'நே', 'நை', 'நொ', 'நோ', 'நௌ'];
+
       const mappings = helperKey[char];
+      if (prevChar &&!( vallinamLetters.includes(prevChar)) && kaLetters.includes(char)) { 
+        keystrokeSequence.push(mappings[1].split(""));
+        continue;
+      }
       if (prevChar &&!( vallinamLetters.includes(prevChar)) && taLetters.includes(char)) { 
         keystrokeSequence.push(mappings[1].split(""));
         continue;
@@ -368,10 +369,26 @@ const TamilTypingTool = () => {
         const temp = mappings[0].split("")
         temp.shift(); 
         temp.shift(); 
-        temp.unshift("j");
-         keystrokeSequence.push(temp);
+        // temp.unshift("j");
+        keystrokeSequence.push(temp);
          continue;
-     }
+     } 
+     if (nexChar && (RaLetters.includes(nexChar) &&char == "ற்")){
+        keystrokeSequence.push(["t"]); 
+        continue;
+     } 
+
+    if (
+        (i === 0 || prevChar === " ") && (naLetters.includes(char)) && (nexChar !=" " &&i !=tamilChars.length-1)
+      ){ 
+        const temp = mappings[0].split("")
+        temp.shift(); 
+        temp.unshift('n');
+        keystrokeSequence.push(temp); 
+        continue;
+      }
+
+ 
 
 
       // Get the first recommended mapping from feedback.json
@@ -391,6 +408,7 @@ const TamilTypingTool = () => {
   
     return keystrokeSequence;
   };
+
 
   const showKeyFeedback = (key, status) => {
     setKeyFeedback({ key, status });
@@ -443,10 +461,10 @@ const TamilTypingTool = () => {
     );
   };
   
-
+  // Handle key press for keyboard mode 
   const handleKeyPress = (key) => {
     // Early return checks
-    if (!iskeyBoardEnabled || isCompleted || isTimeUp || gameState !== "playing") {
+    if (!iskeyBoardEnabled || isCompleted || isTimeUp || gameState !== "playing" || showPerformanceOverlay ) {
       return;
     }
   
@@ -475,7 +493,7 @@ const TamilTypingTool = () => {
     if (!Array.isArray(currentSequence)) {
       console.warn("Invalid sequence at currentItemIndex");
       return;
-    }
+    } 
   
     // Check if we've exceeded current sequence bounds
     if (currentKeyIndex >= currentSequence.length) {
@@ -504,11 +522,19 @@ const TamilTypingTool = () => {
   
       // If this is the last key in the sequence for this Tamil character
       if (currentKeyIndex === currentSequence.length - 1) {
-        // Update character success tracking
-        if (currentTamilChar && currentTamilChar !== " ") {
+        // Update character success tracking only if not visited before
+        if (currentTamilChar && currentTamilChar !== " "  && currentTamilChar != '.'&& !visitedPositions.has(currentItemIndex)) {
+          updatePerformanceData(currentTamilChar, true);
           setCharSuccess((prev) => ({
             ...prev,
             [currentTamilChar]: (prev[currentTamilChar] || 0) + 1,
+          }));
+          setVisitedPositions(prev => new Set([...prev, currentItemIndex]));
+
+          // Update current level correct letters
+          setCurrentLevelCorrect(prev => ({
+            ...prev,
+            [currentTamilChar]: (prev[currentTamilChar] || 0) + 1
           }));
         }
   
@@ -548,11 +574,19 @@ const TamilTypingTool = () => {
       // Incorrect key pressed
       showKeyFeedback(key, "incorrect");
       
-      // Update error tracking for the current Tamil character
-      if (currentTamilChar && currentTamilChar !== " ") {
+      // Update error tracking only if not visited before
+      if (currentTamilChar && currentTamilChar !== " " && currentTamilChar != '.' && !visitedPositions.has(currentItemIndex)) {
+        updatePerformanceData(currentTamilChar, false);
         setCharErrors((prev) => ({
           ...prev,
           [currentTamilChar]: (prev[currentTamilChar] || 0) + 1,
+        }));
+        setVisitedPositions(prev => new Set([...prev, currentItemIndex]));
+
+        // Update current level mistakes
+        setCurrentLevelMistakes(prev => ({
+          ...prev,
+          [currentTamilChar]: (prev[currentTamilChar] || 0) + 1
         }));
       }
     }
@@ -582,14 +616,17 @@ const TamilTypingTool = () => {
         continue;
       }
 
-      if ( i != 0 && i> +1 < input.length && input[i] == "n" && input[i+1] == "j") { 
+      if ( i != 0 && i> +1 < input.length && input[i] == "n" && input[i+1] == "j") {  
+        
         let matched = false;
         // Try to match the longest possible sequence first
         for (let len = Math.min(4, input.length - i); len > 0; len--) {
           const chunk = input.substring(i+2, i + len);
           // Check if this is a valid combination after ஞ்  
-          if (tamilMapping["c" + chunk]) {
-            tokens.push({ english: "nj"+chunk, tamil: "ஞ்"+ tamilMapping["c" + chunk] });
+          if (chunk && tamilMapping["c" + chunk]) {
+            // tokens.push({ english: "nj"+chunk, tamil: "ஞ்"+ tamilMapping["c" + chunk] });
+            tokens.push({ english: "nj", tamil: "ஞ்" });
+            tokens.push({ english: chunk, tamil: tamilMapping["c" + chunk] });
             i += len;
             matched = true;
             break;
@@ -620,6 +657,7 @@ const TamilTypingTool = () => {
             "ne",
             "nee",
             "nE",
+            'nae',
             "nai",
             "no",
             "noo",
@@ -689,7 +727,7 @@ const TamilTypingTool = () => {
         }
       }
 
-      if (i + 1 < input.length && input[i] === "d" && input[i + 1] === "R") {
+      if (i + 1 < input.length && input[i] === "d" && input[i + 1] === "R" &&i-1>=0 && input[i-1] === "n") {
         const lookahead = Math.min(4, input.length - i);
         let found = false;
 
@@ -729,7 +767,7 @@ const TamilTypingTool = () => {
   };
 
   const handleKeyDown = (e) => {
-    if (isCompleted || isTimeUp || isPaused) return;
+    if (isCompleted || isTimeUp || isPaused ||showPerformanceOverlay) return;
    
      
       // Ignore arrow keys completely
@@ -759,6 +797,7 @@ const TamilTypingTool = () => {
       
       e.stopPropagation();
       handleKeyPress(e.key);
+      
     }
     // In non-keyboard mode, let the input handle it naturally
   };
@@ -876,24 +915,35 @@ const TamilTypingTool = () => {
 
   const checkPartialMatch = (currentInput, targetChar) => {
     if (!targetChar) return false;
-
+  
     // Get all possible English sequences for the target Tamil character
-    const possibleSequences = reverseMapping[targetChar] || [];
-
+    const possibleSequences = reverseMapping[targetChar] ? [...reverseMapping[targetChar]] : [];
+  
+    // Special case for 'ந' series
+    if (['ந', 'நா', 'நி', 'நீ', 'நு', 'நூ', 'நெ', 'நே', 'நை', 'நொ', 'நோ', 'நௌ'].includes(targetChar)) {
+      possibleSequences.push("n");
+  
+      // For each sequence that starts with 'w', add a version starting with 'n'
+      const additionalSequences = possibleSequences
+        .filter(seq => seq.startsWith("w"))
+        .map(seq => "n" + seq.slice(1));
+  
+      possibleSequences.push(...additionalSequences);
+    }
+  
     // Check if current input could be start of any valid sequence
     return possibleSequences.some((seq) => seq.startsWith(currentInput));
   };
-
-  // Main processing effect for non-keyboard mode
+  
+  // handle key press for non-keyboard mode
   useEffect(() => {
-    if (iskeyBoardEnabled || gameState != "playing") return;
+    if (iskeyBoardEnabled || gameState != "playing" || showPerformanceOverlay) return;
 
     const tamilChars = parseTamilText(targetText);
     const userTokens = tokenizeInput(userInput);
     let newFeedback = [];
     let correctChars = 0;
     let totalChars = tamilChars.length;
-
     let builtTamilText = "";
     for (const token of userTokens) {
       builtTamilText += token.tamil;
@@ -946,12 +996,19 @@ const TamilTypingTool = () => {
             char: tamilChars[i],
             status: "correct",
             keystrokes: getKeystrokesForTamil(tamilChars[i]),
-          });
+          }); 
+         
           correctChars++;
 
-          if (tamilChars[i] !== " " && i == userTokens.length - 1) {
-            newCharSuccess[tamilChars[i]] =
-              (newCharSuccess[tamilChars[i]] || 0) + 1;
+          // Update performance data only if not visited before
+          if (tamilChars[i] !== " " && tamilChars[i] !== '.' && i == userTokens.length - 1 && !visitedPositions.has(i)) {
+            updatePerformanceData(tamilChars[i], true);
+            setCurrentLevelCorrect(prev => ({
+              ...prev,
+              [tamilChars[i]]: (prev[tamilChars[i]] || 0) + 1
+            }));
+            newCharSuccess[tamilChars[i]] = (newCharSuccess[tamilChars[i]] || 0) + 1;
+            setVisitedPositions(prev => new Set([...prev, i]));
           }
         } else if (isPartialMatch && i === userTokens.length - 1) {
           newFeedback.push({
@@ -967,9 +1024,15 @@ const TamilTypingTool = () => {
             keystrokes: getKeystrokesForTamil(tamilChars[i]),
           });
 
-          if (tamilChars[i] !== " " && i == userTokens.length - 1) {
-            newCharErrors[tamilChars[i]] =
-              (newCharErrors[tamilChars[i]] || 0) + 1;
+          // Update performance data only if not visited before
+          if (tamilChars[i] !== " " && tamilChars[i] !== '.' && i == userTokens.length - 1 && !visitedPositions.has(i)) {
+            updatePerformanceData(tamilChars[i], false);
+            setCurrentLevelMistakes(prev => ({
+              ...prev,
+              [tamilChars[i]]: (prev[tamilChars[i]] || 0) + 1
+            }));
+            newCharErrors[tamilChars[i]] = (newCharErrors[tamilChars[i]] || 0) + 1;
+            setVisitedPositions(prev => new Set([...prev, i]));
           }
         }
       }
@@ -986,14 +1049,12 @@ const TamilTypingTool = () => {
     updateMetrics();
 
     // Check if completed
-
     if (
       (builtTamilChars.length >= tamilChars.length &&
         newFeedback[newFeedback.length - 1]?.status != "pending") ||
       isTimeUp
     ) {
-      if (isTyping) { 
-
+      if (isTyping) {
         updateMetrics();
         setIsCompleted(true);
         clearInterval(timerRef.current);
@@ -1021,31 +1082,6 @@ const TamilTypingTool = () => {
     if (!iskeyBoardEnabled && inputRef.current) {
       inputRef.current.focus();
     }
-  };
-
-  // const changePracticeText = () => {
-  //   const randomIndex = Math.floor(Math.random() * sampleTexts.length);
-  //   setTargetText(sampleTexts[randomIndex]);
-  // };
-
-  const toggleInputMode = () => {
-    // setIskeyBoardEnabled(!iskeyBoardEnabled);
-    // setUserInput("");
-    // setFeedback([]);
-    // setCorrectCount(0);
-    // setUserBackspaces(0);
-    // setCurrentTamilText("");
-    // setCurrentCharIndex(0);
-    // setIsTyping(false);
-    // setIsCompleted(false);
-    // setIsTimeUp(false);
-    // setRemainingTime(INITIAL_TIME_SECONDS);
-    // setWpm(0);
-    // setCpm(0);
-    // setTimeTaken(0);
-    // setAccuracy(100);
-    // setCharErrors({});
-    // setCharSuccess({});
   };
 
   // Get the most frequent error characters (for current session only)
@@ -1092,6 +1128,22 @@ const TamilTypingTool = () => {
       .padStart(2, "0")}`;
   };
 
+  // Add this function to update performance data
+  const updatePerformanceData = (char, isCorrect) => {
+    const storedData = localStorage.getItem('tamilLetterPerformanceWakey');
+    const performanceData = storedData ? JSON.parse(storedData) : {};
+    
+    if (!performanceData[char]) {
+      performanceData[char] = { attempts: 0, correct: 0 };
+    }
+    
+    performanceData[char].attempts += 1;
+    if (isCorrect) {
+      performanceData[char].correct += 1;
+    }
+    
+    localStorage.setItem('tamilLetterPerformanceWakey', JSON.stringify(performanceData));
+  };
 
   // Update the render section of TamilTypingTool.js
   return (
@@ -1101,13 +1153,14 @@ const TamilTypingTool = () => {
       {gameState === "playing" && (
         <div className="game-container">
           <StatsBar
-  wpm={wpm}
-  cpm={cpm}
-  accuracy={accuracy}
-  remainingTime={remainingTime}
-  iskeyBoardEnabled={iskeyBoardEnabled}
-  onPause={handlePause}
-/>
+            wpm={wpm}
+            cpm={cpm}
+            accuracy={accuracy}
+            remainingTime={remainingTime}
+            iskeyBoardEnabled={iskeyBoardEnabled}
+            onPause={handlePause}
+            onShowPerformance={() => setShowPerformanceOverlay(true)}
+          />
 
           <div className="card">
             <TargetText
@@ -1153,11 +1206,7 @@ const TamilTypingTool = () => {
             {iskeyBoardEnabled && (
               <Keyboard keys={keyBoardLabel} renderKey={renderKey} />
             )}
-            <AnalysisBar
-              topSuccessChars={getTopSuccessChars()}
-              topErrorChars={getTopErrorChars()}
-              iskeyBoardEnabled={iskeyBoardEnabled}
-            />
+            {/*   */}
           </div>
         </div>
       )}
@@ -1180,6 +1229,14 @@ const TamilTypingTool = () => {
         <PauseOverlay 
           onResume={handleResume}
           onRestart={handleRestart}
+        />
+      )}
+
+      {showPerformanceOverlay && (
+        <PerformanceOverlay 
+          onClose={() => setShowPerformanceOverlay(false)}
+          currentLevelMistakes={currentLevelMistakes}
+          currentLevelCorrect={currentLevelCorrect}
         />
       )}
     </div>

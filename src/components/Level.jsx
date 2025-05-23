@@ -26,6 +26,7 @@ const LevelSelect = ({ onStart, onLevelChange }) => {
     }
   };
 
+  
   if (loading) {
     return <div className="loading">Loading levels...</div>;
   }

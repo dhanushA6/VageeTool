@@ -5,8 +5,9 @@ import tool from "../images/toolLogo.png"
 import timer from "../images/timer.png" 
 import acc from "../images/accuracy.png"
 import pauseIcon from "../images/pause.png"; // You'll need to add a pause icon
+import '../styles/StatsBar.css';
 
-const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onPause }) => {
+const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onPause, onShowPerformance }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -60,9 +61,22 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onPaus
         )}
       </div>
       
-      <button className="pause-button" onClick={onPause}>
-        <img src={pauseIcon} alt="Pause" className="pause-icon" />
-      </button>
+      <div className="stats-bar__controls">
+        <button 
+          className="stats-bar__button performance-button"
+          onClick={onShowPerformance}
+          title="View Letter Performance"
+        >
+          📊
+        </button>
+        <button 
+          className="stats-bar__button pause-button"
+          onClick={onPause}
+          title="Pause"
+        >
+          <img src={pauseIcon} alt="Pause" className="pause-icon" />
+        </button>
+      </div>
     </div>
   );
 };

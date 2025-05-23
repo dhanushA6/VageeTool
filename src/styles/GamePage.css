@@ -5,7 +5,7 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-image: url('../images/newbg.png'); /* Replace with your image path */
+    background-image: url('../images/WaykeyBG.png'); /* Replace with your image path */
     background-size: cover;
     background-position: center;
     color: white; /* White text for contrast */
@@ -19,7 +19,7 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-image: url('../images/highlevelbg.jpg'); /* Replace with your image path */
+    background-image: url('../images/WaykeyBG.png'); /* Replace with your image path */
     background-size: cover;
     background-position: center;
     color: white; /* White text for contrast */
