@@ -17,7 +17,7 @@ const CurrentTamilText = ({ currentTamilText, showForLevel, currentCharIndex }) 
   const renderTextWithCursor = () => {
     if (!currentTamilText) {
       return (
-        <span className="empty-text">(Start Typing...)
+        <span className="empty-text">(தொடங்கு ...)
           <span className="typing-cursor"></span>
         </span>
       );

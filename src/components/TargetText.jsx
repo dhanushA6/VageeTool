@@ -5,7 +5,8 @@ const TargetText = ({ targetTamilChars, currentItemIndex, currentCharIndex, feed
   const currentCharRef = useRef(null);
   
   const activeIndex = !iskeyBoardEnabled ? currentCharIndex : currentItemIndex;
-
+  const isShortText = targetTamilChars.length < 20; // Consider text short if less than 10 characters
+ 
   useEffect(() => {
     if (currentCharRef.current && targetTextRef.current) {
       const container = targetTextRef.current;
@@ -30,13 +31,13 @@ const TargetText = ({ targetTamilChars, currentItemIndex, currentCharIndex, feed
   return (
     <div className="target-text-outer-container">
       {/* Level indicator circle - moved outside the scrollable area */}
-      <div className="level-indicator">
+      {/* <div className="level-indicator">
         {level}
-      </div>
+      </div> */}
       
       <div className={`target-area ${!iskeyBoardEnabled ? '' : 'small'}`}>
         <div 
-          className={`target-text ${!iskeyBoardEnabled ? '' : 'small'}`} 
+          className={`target-text ${!iskeyBoardEnabled ? '' : 'small'} ${isShortText ? 'short-text' : ''}`} 
           ref={targetTextRef}
         >
           {feedback.map((item, index) => (

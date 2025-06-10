@@ -6,8 +6,11 @@ import timer from "../images/timer.png"
 import acc from "../images/accuracy.png"
 import pauseIcon from "../images/pause.png"; // You'll need to add a pause icon
 import '../styles/StatsBar.css';
+import keyBoard from '../images/keyboard.png';
+import performace from '../images/performance.png'
+import keyBoardOff from '../images/keyBoardOff.png';
 
-const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onPause, onShowPerformance }) => {
+const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onShowPerformance, onToggleKeyboard }) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -18,13 +21,13 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onPaus
   
   return (
     <div className="stats-bar">
-      <div className="logo-container">
+      {/* <div className="logo-container">
         <img
           src={tool}
           alt="Logo"
           className="stats-bar-logo"
         />
-      </div>
+      </div> */}
 
       <div className="stats-container"> 
         <div className="stats-bar__item">
@@ -52,30 +55,37 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onPaus
           </div>
         )}
 
-        {!iskeyBoardEnabled && (
+        {/* {!iskeyBoardEnabled && (
           <div className="stats-bar__item">
             <img src={acc} alt="Accuracy" className="stats-bar__icon" />
             <span className="stats-bar__label"></span>
             <span className="stats-bar__value">{accuracy}%</span>
           </div>
-        )}
+        )} */}
       </div>
       
       <div className="stats-bar__controls">
         <button 
-          className="stats-bar__button performance-button"
+          className={`stats-bar__button keyboard-button ${iskeyBoardEnabled ? 'active' : ''}`}
+          onClick={onToggleKeyboard}
+          title="Toggle Keyboard Mode"
+        >
+          { iskeyBoardEnabled ? <img src={keyBoard} alt="help" />:<img src={keyBoardOff} alt="help" />}
+        </button>
+       <button
+           className={`stats-bar__button keyboard-button ${iskeyBoardEnabled ? 'active' : ''}`}
           onClick={onShowPerformance}
           title="View Letter Performance"
-        >
-          📊
+        
+        >    {<img src={performace} alt="Performace" />}
         </button>
-        <button 
+        {/* <button 
           className="stats-bar__button pause-button"
           onClick={onPause}
           title="Pause"
         >
           <img src={pauseIcon} alt="Pause" className="pause-icon" />
-        </button>
+        </button> */}
       </div>
     </div>
   );

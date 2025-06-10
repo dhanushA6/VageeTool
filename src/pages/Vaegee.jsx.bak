@@ -1,0 +1,280 @@
+import React, { useState, useEffect, useRef } from "react";
+import tamilMapping from "../data/tamilMapping.json";
+import "../styles/GamePage.css";
+import helperKey from "../data/feedback.json";
+import shiftMap from "../data/shiftMap";
+import SpecialKey from "../data/SpecialKey";
+import Keyboard from "../components/Keyboard";
+import keyBoardLabel from "../data/keyBoardLabel";
+import ResultsOverlay from "../components/Result";
+import StatsBar from "../components/StatusBar";
+import CurrentTamilText from "../components/CurrentTamilText";
+import TargetText from "../components/TargetText";
+import KeystrokeHint from "../components/KeystokeHint"; 
+import PerformanceOverlay from '../components/PerformanceOverlay';
+import speed from "../images/speed.png" 
+import tool from "../images/toolLogo.png" 
+import timer from "../images/timer.png" 
+import acc from "../images/accuracy.png"
+import pauseIcon from "../images/pause.png";
+import backgroundImage from "../images/WaykeyBG.png";
+import hintBG from "../images/hint.png";
+
+const reverseMapping = {};
+Object.entries(tamilMapping).forEach(([english, tamil]) => {
+  if (!reverseMapping[tamil]) {
+    reverseMapping[tamil] = [];
+  }
+  reverseMapping[tamil].push(english);
+});
+
+const Vaegee = ({ currentTask, onNextTask, isLastTask }) => {
+  const [gameState, setGameState] = useState('start');
+  const [targetText, setTargetText] = useState('');
+  const [inputText, setInputText] = useState('');
+  const [startTime, setStartTime] = useState(null);
+  const [endTime, setEndTime] = useState(null);
+  const [showResults, setShowResults] = useState(false);
+  const [showKeyboard, setShowKeyboard] = useState(true);
+  const [showHelp, setShowHelp] = useState(false);
+  const [performanceData, setPerformanceData] = useState({});
+  const [userInput, setUserInput] = useState("");
+  const [feedback, setFeedback] = useState([]);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [userBackspaces, setUserBackspaces] = useState(0);
+  const [currentTamilText, setCurrentTamilText] = useState("");
+  const [showKeystrokes, setShowKeystrokes] = useState(true);
+  const [currentCharIndex, setCurrentCharIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isHelpEnabled, setIsHelpEnabled] = useState(true);
+  const [remainingTime, setRemainingTime] = useState(600);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [isTimeUp, setIsTimeUp] = useState(false);
+  const [wpm, setWpm] = useState(0);
+  const [cpm, setCpm] = useState(0);
+  const [accuracy, setAccuracy] = useState(100);
+  const [timeTaken, setTimeTaken] = useState(0);
+  const [charErrors, setCharErrors] = useState({});
+  const [charSuccess, setCharSuccess] = useState({});
+  const [visitedPositions, setVisitedPositions] = useState(new Set());
+  const [iskeyBoardEnabled, setIskeyBoardEnabled] = useState(true);
+  const [keystrokeSequence, setKeystrokeSequence] = useState([]);
+  const [currentItemIndex, setCurrentItemIndex] = useState(0);
+  const [currentKeyIndex, setCurrentKeyIndex] = useState(0);
+  const [highlightedKey, setHighlightedKey] = useState("");
+  const [shiftOn, setShiftOn] = useState(false);
+  const [keyFeedback, setKeyFeedback] = useState({ key: "", status: "" });
+  const [currentKeystroke, setCurrentKeystroke] = useState("");
+  const [showPerformanceOverlay, setShowPerformanceOverlay] = useState(false);
+  const [currentLevelMistakes, setCurrentLevelMistakes] = useState({});
+  const [currentLevelCorrect, setCurrentLevelCorrect] = useState({});
+
+  const timerRef = useRef(null);
+  const keyFeedbackTimerRef = useRef(null);
+  const inputRef = useRef(null);
+
+  const startGame = () => {
+    setGameState('playing');
+    setStartTime(Date.now());
+    setEndTime(null);
+    setInputText('');
+    setShowResults(false);
+    setTargetText(currentTask.task);
+    setIsPaused(false);
+    setUserInput("");
+    setFeedback([]);
+    setCorrectCount(0);
+    setTotalCount(0);
+    setUserBackspaces(0);
+    setCurrentTamilText("");
+    setCurrentCharIndex(0);
+    setCurrentItemIndex(0);
+    setCurrentKeyIndex(0);
+    setIsCompleted(false);
+    setIsTyping(false);
+    setRemainingTime(600);
+    setWpm(0);
+    setCpm(0);
+    setTimeTaken(0);
+    setAccuracy(100);
+    setCharErrors({});
+    setCharSuccess({});
+    setVisitedPositions(new Set());
+    setCurrentLevelMistakes({});
+    setCurrentLevelCorrect({});
+    setIskeyBoardEnabled(true);
+    
+    const tamilChars = parseTamilText(currentTask.task) || [];
+    const initialFeedback = tamilChars.map((char) => ({
+      char: char || '',
+      status: "pending",
+      keystrokes: getKeystrokesForTamil(char) || "N/A",
+    }));
+    setFeedback(initialFeedback);
+    setTotalCount(tamilChars.length);
+  };
+
+  const completeGame = () => {
+    setGameState('completed');
+    setEndTime(Date.now());
+    setShowResults(true);
+    updateMetrics();
+    clearInterval(timerRef.current);
+    setIsCompleted(true);
+  };
+
+  const retryLevel = () => {
+    startGame();
+  };
+
+  const handleNextLevel = () => {
+    if (isLastTask) {
+      setGameState('completed');
+    } else {
+      onNextTask();
+    }
+  };
+
+  const calculateAccuracy = () => {
+    if (!inputText || !targetText) return 0;
+    const correctChars = inputText.split('').filter((char, index) => char === targetText[index]).length;
+    return Math.round((correctChars / targetText.length) * 100);
+  };
+
+  const calculateWPM = () => {
+    if (!startTime || !endTime || !inputText) return 0;
+    const timeInMinutes = (endTime - startTime) / 60000;
+    const words = inputText.trim().split(/\s+/).length;
+    return Math.round(words / timeInMinutes);
+  };
+
+  const getTopErrorChars = () => {
+    const errorMap = {};
+    inputText.split('').forEach((char, index) => {
+      if (char !== targetText[index]) {
+        errorMap[char] = (errorMap[char] || 0) + 1;
+      }
+    });
+    return Object.entries(errorMap)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([char]) => char);
+  };
+
+  const getTopSuccessChars = () => {
+    const successMap = {};
+    inputText.split('').forEach((char, index) => {
+      if (char === targetText[index]) {
+        successMap[char] = (successMap[char] || 0) + 1;
+      }
+    });
+    return Object.entries(successMap)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([char]) => char);
+  };
+
+  // ... rest of your existing functions ...
+
+  return (
+    <div className={`tamil-typing-test ${!iskeyBoardEnabled ? '' : 'small'}`} onClick={handleContainerClick}>
+      {gameState === "start" && (
+        <div className="start-overlay">
+          <h2>Ready to Start?</h2>
+          <button onClick={startGame} className="start-button">
+            Start
+          </button>
+        </div>
+      )}
+
+      {gameState === "playing" && (
+        <div className="game-container">
+          <StatsBar
+            wpm={wpm}
+            cpm={cpm}
+            accuracy={accuracy}
+            remainingTime={remainingTime}
+            iskeyBoardEnabled={iskeyBoardEnabled}
+            onShowPerformance={() => setShowPerformanceOverlay(true)}
+            onToggleKeyboard={handleToggleKeyboard}
+            onToggleHelp={handleToggleHelp}
+            isHelpEnabled={isHelpEnabled}
+          />
+
+          <div className="card">
+            <TargetText
+              targetTamilChars={targetTamilChars}
+              currentItemIndex={currentItemIndex}
+              currentCharIndex={currentCharIndex}
+              feedback={feedback}
+              iskeyBoardEnabled={iskeyBoardEnabled}
+            />
+
+            <div className="input-area" style={{ position: "relative" }}>
+              <input
+                ref={inputRef}
+                style={{
+                  position: "absolute",
+                  opacity: 0,
+                  height: 0,
+                  width: 0,
+                  pointerEvents: "none",
+                }}
+                value={userInput}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                disabled={gameState !== "playing"}
+                autoFocus
+              />
+            </div>
+
+            <CurrentTamilText
+              currentTamilText={currentTamilText}
+              showForLevel={!iskeyBoardEnabled}
+            />
+
+            <KeystrokeHint
+              showKeystrokes={showKeystrokes}
+              currentTamilChar={currentTamilChar}
+              currentKeystroke={currentKeystroke}
+              iskeyBoardEnabled={iskeyBoardEnabled}
+              currentKeystrokes={currentKeystrokes}
+            />
+
+            {iskeyBoardEnabled && (
+              <Keyboard keys={keyBoardLabel} renderKey={renderKey} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {showResults && (
+        <ResultsOverlay
+          results={{
+            time: (endTime - startTime) / 1000,
+            accuracy: calculateAccuracy(),
+            wpm: calculateWPM(),
+            topErrors: getTopErrorChars(),
+            topSuccess: getTopSuccessChars()
+          }}
+          onRetry={retryLevel}
+          onNextLevel={handleNextLevel}
+          onShowPerformance={() => setShowPerformanceOverlay(true)}
+          isLastTask={isLastTask}
+        />
+      )}
+
+      {showPerformanceOverlay && (
+        <PerformanceOverlay 
+          onClose={() => setShowPerformanceOverlay(false)}
+          currentLevelMistakes={currentLevelMistakes}
+          currentLevelCorrect={currentLevelCorrect}
+        />
+      )}
+    </div>
+  );
+};
+
+export default Vaegee; 

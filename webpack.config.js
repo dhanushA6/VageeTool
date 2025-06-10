@@ -80,7 +80,7 @@ module.exports = (_, argv) => ({
       remotes: {},
       exposes: {
         "./Mukka": "./src/main.jsx",
-        "./LandingPage": "./src/LandingPage.jsx",
+        // "./LandingPage": "./src/LandingPage.jsx",
       },
       shared: {
         ...deps,

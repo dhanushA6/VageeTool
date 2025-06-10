@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import '../styles/PerformanceOverlay.css';
 import moreDetailsIcon from '../images/moredetails.png';
-import lessDetailsIcon from '../images/lessdetails.png';
+import lessDetailsIcon from '../images/lessdetails.png'; 
+import close from '../images/closeButton.png'
 // import { convertPerformanceDataToTamil } from '../utils/tamilMapping';
 
-const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCorrect = {} }) => {
+const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCorrect = {}, performanceData = {} }) => {
   const [selectedSeries, setSelectedSeries] = useState('vowels');
-  const [performanceData, setPerformanceData] = useState({});
   const [showDetails, setShowDetails] = useState(false);
 
   // Tamil translations for UI text
   const tamilLabels = {
     // Page title and headers
-    letterPerformance: "எழுத்தின் வலிமை",
+    letterPerformance: "தட்டச்சு வலிமை",
     selectSeries: "வரிசையைத் தேர்வு செய்க",
-    currentLevelMistakes: "தற்போதைய நிலை பிழைகள்",
-    currentLevelCorrect: "தற்போதைய நிலை சரியான எழுத்துக்கள்",
+    currentLevelMistakes: "அண்மைப் பிழைகள்",
+    currentLevelCorrect: "அண்மை வலிமை",
     moreDetails: "மேலும் விவரங்கள்",
     lessDetails: "குறைவான விவரங்கள்",
     // Series names
@@ -40,27 +40,19 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
     LaSeries: "ள வரிசை",
     RaSeries: "ற வரிசை",
     naSeries2: "ன வரிசை",
+    jaSeries: "ஜ வரிசை",
+    shaSeries: "ஷ வரிசை",
+    saSeries: "ஸ வரிசை",
+    haSeries: "ஹ வரிசை",
+    kshaSeries: "க்ஷ வரிசை",
 
     // Color legend and stats
-    accuracyScale: "துல்லியத்தன் அளவுகோல்",
+    accuracyScale: "துல்லிய நிற அளவை",
     hoverTip: "சதவீதங்களைக் காண அளவுகோலின் மேல் நகர்த்தவும்",
     
     // Buttons and controls
     close: "x"
   };
-
-  useEffect(() => {
-    const storedData = localStorage.getItem('tamilLetterPerformanceWakey');
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        setPerformanceData(parsedData);
-      } catch (error) {
-        console.error('Error parsing performance data:', error);
-        setPerformanceData({});
-      }
-    }
-  }, []);
 
   const getAccuracyColor = (correct, attempts) => {
     if (attempts === 0) return '#e0e0e0'; // Grey for unexplored letters
@@ -130,7 +122,12 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
     zhaSeries: ['ழ', 'ழா', 'ழி', 'ழீ', 'ழு', 'ழூ', 'ழெ', 'ழே', 'ழை', 'ழொ', 'ழோ', 'ழௌ'],
     LaSeries: ['ள', 'ளா', 'ளி', 'ளீ', 'ளு', 'ளூ', 'ளெ', 'ளே', 'ளை', 'ளொ', 'ளோ', 'ளௌ'],
     RaSeries: ['ற', 'றா', 'றி', 'றீ', 'று', 'றூ', 'றெ', 'றே', 'றை', 'றொ', 'றோ', 'றௌ'],
-    naSeries2: ['ன', 'னா', 'னி', 'னீ', 'னு', 'னூ', 'னெ', 'னே', 'னை', 'னொ', 'னோ', 'னௌ']
+    naSeries2: ['ன', 'னா', 'னி', 'னீ', 'னு', 'னூ', 'னெ', 'னே', 'னை', 'னொ', 'னோ', 'னௌ'],
+    jaSeries: ['ஜ', 'ஜா', 'ஜி', 'ஜீ', 'ஜு', 'ஜூ', 'ஜெ', 'ஜே', 'ஜை', 'ஜொ', 'ஜோ', 'ஜௌ'],
+    shaSeries: ['ஷ', 'ஷா', 'ஷி', 'ஷீ', 'ஷு', 'ஷூ', 'ஷெ', 'ஷே', 'ஷை', 'ஷொ', 'ஷோ', 'ஷௌ'],
+    saSeries: ['ஸ', 'ஸா', 'ஸி', 'ஸீ', 'ஸு', 'ஸூ', 'ஸெ', 'ஸே', 'ஸை', 'ஸொ', 'ஸோ', 'ஸௌ'],
+    haSeries: ['ஹ', 'ஹா', 'ஹி', 'ஹீ', 'ஹு', 'ஹூ', 'ஹெ', 'ஹே', 'ஹை', 'ஹொ', 'ஹோ', 'ஹௌ'],
+    kshaSeries: ['க்ஷ', 'க்ஷா', 'க்ஷி', 'க்ஷீ', 'க்ஷு', 'க்ஷூ', 'க்ஷெ', 'க்ஷே', 'க்ஷை', 'க்ஷொ', 'க்ஷோ', 'க்ஷௌ']
   };
 
   const getTopLetters = (data, count = 7) => {
@@ -195,7 +192,7 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
               ))}
             </div>
           ) : (
-            <div className="no-mistakes">பிழைகள் எதுவும் இல்லை</div>
+            <div className="no-mistakes">இல்லை</div>
           )}
         </div>
 
@@ -211,7 +208,7 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
               ))}
             </div>
           ) : (
-            <div className="no-correct">சரியான எழுத்துக்கள் எதுவும் இல்லை</div>
+            <div className="no-correct"> இல்லை</div>
           )}
         </div>
       </div>
@@ -222,19 +219,20 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
     <div className="performance-overlay">
       <div className="performance-content">
         <div className="performance-header">
+          <button 
+            className="toggle-details-button"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            <img 
+              src={showDetails ? lessDetailsIcon : moreDetailsIcon} 
+              alt={showDetails ? tamilLabels.lessDetails : tamilLabels.moreDetails}
+            />
+          </button>
           <h2>{tamilLabels.letterPerformance}</h2>
-          <button className="close-button" onClick={onClose}>{tamilLabels.close}</button>
+          <div className="close-button" onClick={onClose}> 
+            <img src={close} alt="close-button" />
+          </div>
         </div>
-        
-        <button 
-          className="details-toggle"
-          onClick={() => setShowDetails(!showDetails)}
-        >
-          <img 
-            src={showDetails ? lessDetailsIcon : moreDetailsIcon} 
-            alt={showDetails ? tamilLabels.lessDetails : tamilLabels.moreDetails}
-          />
-        </button>
         
         {renderCurrentLevelStats()}
         
@@ -268,6 +266,11 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
                 <option value="LaSeries">{tamilLabels.LaSeries}</option>
                 <option value="RaSeries">{tamilLabels.RaSeries}</option>
                 <option value="naSeries2">{tamilLabels.naSeries2}</option>
+                <option value="jaSeries">{tamilLabels.jaSeries}</option>
+                <option value="shaSeries">{tamilLabels.shaSeries}</option>
+                <option value="saSeries">{tamilLabels.saSeries}</option>
+                <option value="haSeries">{tamilLabels.haSeries}</option>
+                <option value="kshaSeries">{tamilLabels.kshaSeries}</option>
               </select>
             </div>
 
@@ -298,7 +301,7 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
                 <span>100%</span>
               </div>
               <div className="legend-description">
-                {/* {tamilLabels.hoverTip} */}
+                {tamilLabels.hoverTip}
               </div>
             </div>
           </>
