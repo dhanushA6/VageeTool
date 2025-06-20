@@ -3,7 +3,7 @@ import React from 'react';
 import '../styles/Result.css';
 import performance from '../images/performance.png'
 
-const ResultsOverlay = ({ results, onRetry, onNextTask, isLastTask, onShowPerformance, taskType, accuracy }) => {
+const ResultsOverlay = ({ results, onRetry, onNextTask, isLastTask, onShowPerformance, taskType, accuracy, mode }) => {
   // const shouldShowRetry = taskType === "Test" && accuracy < 75;
   const shouldShowRetry = accuracy < 75;
 
@@ -52,7 +52,12 @@ const ResultsOverlay = ({ results, onRetry, onNextTask, isLastTask, onShowPerfor
               மீண்டும் முயற்சிக்க
             </button>
           )}
-          {(!isLastTask  && !shouldShowRetry) && (
+          {mode === "activity" && shouldShowRetry && (
+            <button className="next-button" onClick={onNextTask}>
+              கேள்வியை தவிர் 
+            </button>
+          )}
+          {((!isLastTask && !shouldShowRetry) || (mode === "freeplay" && !shouldShowRetry)) && (
             <button className="next-button" onClick={onNextTask}>
               அடுத்த பயிற்சி
             </button>

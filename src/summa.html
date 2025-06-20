@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>React iframe Test</title>
+  <style>
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: 2px solid #333;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Send postMessage to React App in iframe</h1>
+
+  <label>User ID: <input type="number" id="userID" value="123" /></label><br>
+  <label>Level: <input type="number" id="levelValue" value="1" /></label><br>
+  <label>Mode: 
+    <select id="mode">
+      <option value="activity">activity</option>
+      <option value="freeplay">freeplay</option>
+    </select>
+  </label><br><br>
+
+  <button onclick="sendMessage()">Send Message to React</button>
+
+  <!-- Load the React app inside the iframe -->
+  <iframe id="reactApp" src="http://localhost:8091/#/game"></iframe>
+
+  <script>
+    function sendMessage() {
+      const userID = parseInt(document.getElementById('userID').value, 10);
+      const levelValue = parseInt(document.getElementById('levelValue').value, 10);
+      const mode = document.getElementById('mode').value;
+
+      const message = {
+        userID,
+        levelValue,
+        mode
+      };
+
+      const iframe = document.getElementById('reactApp');
+      iframe.contentWindow.postMessage(message, '*');
+
+      console.log("📨 Message sent to iframe:", message);
+    }
+  </script>
+</body>
+</html>

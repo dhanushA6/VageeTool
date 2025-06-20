@@ -5,14 +5,13 @@
   justify-content: space-between;
   align-items: center;
   background-image: url('../images/strip.jpg');
-  background-size: 100% 100%;
+  background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
   color: #000;
-  padding: 12px 20px;
+  padding: 12px 0px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  width: 97%;
-  min-width: 310px;
+  width: 100%;
   border-radius: 0;
   box-shadow: none;
   flex-wrap: wrap;
@@ -22,32 +21,9 @@
   overflow: hidden;
 }
 
-.stats-bar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('../images/strip.jpg');
-  background-size: 100% 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  z-index: -1;
-  transform: scale(1.02); /* Slightly scale up to prevent edge cutoff */
-}
 
-.logo-container {
-  display: flex;
-  align-items: center;
-  margin-right: 20px;
-}
 
-.stats-bar-logo {
-  height: 60px;
-  width: auto;
-  object-fit: contain;
-}
+
 
 .stats-container {
   display: flex;
@@ -70,6 +46,7 @@
   min-width: 85px;
   justify-content: center;
   transition: all 0.3s ease;
+  height: auto;
 }
 
 .stats-bar__item:hover {
@@ -78,8 +55,8 @@
 }
 
 .stats-bar__icon {
-  width: 30px;
-  height: 30px;
+  width: 25px;
+  height: 25px;
   filter: invert(100%);
 }
 
@@ -124,9 +101,6 @@
   background-color: #ffffff;
   border: 2px solid #000;
   border-radius: 10px;
-  padding: 8px;
-  min-width: 50px;
-  min-height: 50px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;

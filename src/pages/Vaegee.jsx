@@ -23,7 +23,8 @@ import hintBG from "../images/hint.png";
 import landingPageBackground from "../images/LandingPage.jpg";
 import gameControlGif from "../images/game-control.gif";
 import helperGif from "../images/helper.gif";
-import helpPageBackground from "../images/Help_Page.jpg";
+import helpPageBackground from "../images/Help_Page.jpg"; 
+import HelpOverlay from "../components/HelpOverlay";
 // Create a reverse mapping for checking valid inputs
 
 const reverseMapping = {};
@@ -34,7 +35,7 @@ Object.entries(tamilMapping).forEach(([english, tamil]) => {
   reverseMapping[tamil].push(english);
 });
 
-const Vaegee = ({ gameData, userID, mode, level }) => {
+const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
   const [gameState, setGameState] = useState("playing");
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
   const [targetText, setTargetText] = useState("vanakkam");
@@ -51,7 +52,7 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
   const [isHelpEnabled, setIsHelpEnabled] = useState(true);
 
   // Change to a countdown timer
-  const INITIAL_TIME_SECONDS = 600; // 10 minutes by default
+  const INITIAL_TIME_SECONDS = 120; // 10 minutes by default
   const [remainingTime, setRemainingTime] = useState(INITIAL_TIME_SECONDS);
   const [isTyping, setIsTyping] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -87,7 +88,10 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
   const [currentLevelCorrect, setCurrentLevelCorrect] = useState({});
 
   const [letters, setLetters] = useState(gameData?.letters || {});
-  const [completedTasks, setCompletedTasks] = useState([]);
+  const [completedTasks, setCompletedTasks] = useState([]); 
+
+  const [showHelpOverlay, setShowHelpOverlay] = useState(false);
+
   
   // Update letters when gameData changes
   useEffect(() => {
@@ -146,24 +150,30 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
   };
 
   const completeGame = () => { 
-
     // First update all metrics 
     if (currentTaskIndex == gameData.contents.length-1 && accuracy >=75 && timeTaken !=0) {  
-      console.log("Hi m this complete game")
+      console.log("Hi m this complete game");
       storeTaskCompletion();
       setGameState("completed");
         
-      // Send completion message to parent
-      const gameResult = {
-        type: "levelComplete",
-        data: {
-          level: level,
-          timeTaken: timeTaken,
-          points: accuracy, // Using accuracy as points
-        },
-      };
-      
-      window.parent.postMessage(gameResult, "*");
+      // Only send completion message to parent if not in freeplay mode
+      if (mode !== "freeplay") {
+        // Calculate average accuracy for all completed tasks
+        const avgAccuracy = completedTasks.length
+          ? Math.round(completedTasks.reduce((sum, t) => sum + Number(t.accuracy), 0) / completedTasks.length)
+          : accuracy;
+        console.log(avgAccuracy)
+        const gameResult = {
+          type: "levelComplete",
+          data: {
+            level: level,
+            timeTaken: timeTaken,
+            points: avgAccuracy, // Using average accuracy as points
+          },
+        };
+        
+        window.parent.postMessage(gameResult, "*");
+      }
     }
     updateMetrics();
     // Then stop the timer and set completion state
@@ -369,9 +379,18 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
       const chaLetters = ["ச", "சா", "சி", "சீ", "சு", "சூ", "செ", "சே", "சை", "சொ", "சோ", "சௌ"];
       const kaLetters =  ['க', 'கா', 'கி', 'கீ', 'கு', 'கூ', 'கெ', 'கே', 'கை', 'கொ', 'கோ', 'கௌ'];
       const naLetters = ['ந', 'நா', 'நி', 'நீ', 'நு', 'நூ', 'நெ', 'நே', 'நை', 'நொ', 'நோ', 'நௌ'];
+      const nyaSeries = [
+        "ஞ", "ஞா", "ஞி", "ஞீ",
+        "ஞு", "ஞூ", "ஞெ", "ஞே", "ஞை",
+        "ஞொ", "ஞோ", "ஞௌ"
+        ];
 
       const mappings = helperKey[char];
       if (prevChar &&!( vallinamLetters.includes(prevChar)) && kaLetters.includes(char)) { 
+        keystrokeSequence.push(mappings[1].split(""));
+        continue;
+      }
+       if (prevChar && prevChar =='ஞ்' && nyaSeries.includes(char)) { 
         keystrokeSequence.push(mappings[1].split(""));
         continue;
       }
@@ -383,6 +402,21 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
         keystrokeSequence.push(mappings[1].split(""));
         continue;
       }  
+
+      if (prevChar && chaLetters.includes(char) && prevChar === "ஞ்"){
+     
+        const temp = mappings[0].split("")
+        temp.shift(); 
+        temp.shift(); 
+        // temp.unshift("j");
+        keystrokeSequence.push(temp);
+         continue;
+     } 
+
+      if (prevChar &&!(  vallinamLetters.includes(prevChar)) && chaLetters.includes(char)) {
+        keystrokeSequence.push(mappings[1].split(""));
+        continue;
+      } 
     
       if (prevChar&&!(vallinamLetters.includes(prevChar)) && paLetters.includes(char)) {
         keystrokeSequence.push(mappings[1].split(""));
@@ -395,15 +429,8 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
           keystrokeSequence.push(temp);
           continue;
       } 
-      // if manjal
-      if (prevChar && chaLetters.includes(char) && prevChar === "ஞ்"){
-        const temp = mappings[0].split("")
-        temp.shift(); 
-        temp.shift(); 
-        // temp.unshift("j");
-        keystrokeSequence.push(temp);
-         continue;
-     } 
+   
+
      if (nexChar && (RaLetters.includes(nexChar) &&char == "ற்")){
         keystrokeSequence.push(["t"]); 
         continue;
@@ -1266,7 +1293,7 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
     preloadImages();
   }, []);
 
-  const nextTask = () => {
+  const nextTask = async () => {
     if (gameData?.contents) {
       const nextIndex = currentTaskIndex + 1;
       if (nextIndex < gameData.contents.length) {
@@ -1276,19 +1303,98 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
         startGame();
       } else {
         // All tasks completed
+        console.log("Hi m this complete game");
+        storeTaskCompletion();
         setGameState("completed");
         
-        // Send completion message to parent
-        const gameResult = {
-          type: "levelComplete",
-          data: {
-            level: level,
-            timeTaken: timeTaken,
-            points: accuracy, // Using accuracy as points
-          },
-        };
-        
-        window.parent.postMessage(gameResult, "*");
+        // Only send completion message to parent if not in freeplay mode
+        if (mode !== "freeplay") {
+          // Calculate average accuracy for all completed tasks
+          const avgAccuracy = completedTasks.length
+            ? Math.round(completedTasks.reduce((sum, t) => sum + Number(t.accuracy), 0) / completedTasks.length)
+            : accuracy;
+          const gameResult = {
+            type: "levelComplete",
+            data: {
+              level: level,
+              timeTaken: timeTaken,
+              points: avgAccuracy, // Using average accuracy as points
+            },
+          };
+          
+          window.parent.postMessage(gameResult, "*");
+        } else {
+          // For freeplay mode, first send current data to server
+          try {
+            // First send the current task data
+            const formData = new URLSearchParams();
+            formData.append('mode', mode);
+            formData.append('userid', userID);
+            formData.append('level', level);
+            formData.append('contents', JSON.stringify(completedTasks));
+            formData.append('letters', JSON.stringify(letters));
+
+            console.log('Sending current data before fetching new content:', {
+              mode,
+              userid: userID,
+              level,
+              contents: completedTasks,
+              letters: JSON.stringify(letters)
+            });
+
+            const updateResponse = await fetch('https://academy.karky.in:6128/thamba/game/vaegee/update', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+              body: formData
+            });
+
+            if (!updateResponse.ok) {
+              console.error('Failed to update current game data');
+            }
+
+            // Then fetch new content
+            const payload = {
+              mode: mode,
+              userid: userID,
+              level: level,
+            };
+            
+            const queryString = new URLSearchParams(payload).toString();
+            const response = await fetch(`https://academy.karky.in:6128/thamba/game/vaegee/play?${queryString}`);
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const newGameData = await response.json();
+            // Parse the letters data if it exists
+            if (newGameData.letters) {
+              try {
+                newGameData.letters = JSON.parse(newGameData.letters);
+              } catch (error) {
+                console.error('Error parsing letters data:', error);
+                newGameData.letters = {};
+              }
+            } else {
+              newGameData.letters = {};
+            }
+            
+            // Update game data through the prop
+            if (onGameDataUpdate) {
+              onGameDataUpdate(newGameData);
+            }
+            
+            // Reset game state with new data
+            setCurrentTaskIndex(0);
+            setTargetText(newGameData.contents[0].task);
+            startGame();
+          } catch (error) {
+            console.error('Error in freeplay mode:', error);
+            alert('Unable to load new content. Please try again later.');
+            retryLevel();
+          }
+        }
       }
     }
   };
@@ -1297,6 +1403,7 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
   useEffect(() => {
     if (gameData?.contents?.length > 0) {
       setTargetText(gameData.contents[0].task);
+      // setTargetText("மஞ்சள்");
       // setTargetText("தலைவி தோழியை நோக்கிக் கூறுகிறாள்: தோழி! என் தலைவர் நிலைத்து நிற்கும் வாய்மைச் சொல்லுடையவர்; பழகப்பழக நீடிக்கும் இனிமையுடையவர்; ஒரு நாளும் என் தோள்களைப் பிரிந்தறியாதவர். அவரைப் போன்ற மேலானவர்களுடைய நட்பு தாமரைத் தாதையும் சந்தனத் தாதையும் ஊதி எடுத்துச் சந்தன மரத்தில் அமைத்த தேன் இறால் போன்ற மேன்மையுடையது. நீரில்லா உலகம் வாழ முடியாததுபோல, அவரில்லாமல் நான் வாழமாட்டேன் என்பதை அவர் அறிவார். பிரிவினால் ஏற்படும் என் நெற்றிப் பசலைக்கே அஞ்சுபவர் என்னைப் பிரிதலாகிய சிறுமைச் செயல் செய்வாரா? சொல்!");
       startGame(); // Start the game immediately when target text is set
     }
@@ -1349,7 +1456,7 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
         userid: userID,
         level,
         contents: tasks, 
-        letters:JSON.stringify(letters)
+        letters: JSON.stringify(letters)
       });
 
       const response = await fetch('https://academy.karky.in:6128/thamba/game/vaegee/update', {
@@ -1400,7 +1507,8 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
             onShowPerformance={() => setShowPerformanceOverlay(true)}
             onToggleKeyboard={handleToggleKeyboard}
             onToggleHelp={handleToggleHelp}
-            isHelpEnabled={isHelpEnabled}
+            isHelpEnabled={isHelpEnabled} 
+            setShowHelpOverlay = {setShowHelpOverlay}
           />
 
           <div className="card">
@@ -1465,6 +1573,7 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
           onShowPerformance={() => setShowPerformanceOverlay(true)}
           taskType={gameData?.contents?.[currentTaskIndex]?.type}
           accuracy={accuracy}
+          mode={mode}
         />
       )} 
 
@@ -1475,6 +1584,9 @@ const Vaegee = ({ gameData, userID, mode, level }) => {
           currentLevelCorrect={currentLevelCorrect}
           performanceData={letters}
         />
+      )} 
+      {showHelpOverlay && (
+        <HelpOverlay onClose={() => setShowHelpOverlay(false)} />
       )}
     </div>
   );

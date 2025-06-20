@@ -9,8 +9,8 @@ import '../styles/StatsBar.css';
 import keyBoard from '../images/keyboard.png';
 import performace from '../images/performance.png'
 import keyBoardOff from '../images/keyBoardOff.png';
-
-const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onShowPerformance, onToggleKeyboard }) => {
+import helpIcon from '../images/help.png';
+const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onShowPerformance, onToggleKeyboard , setShowHelpOverlay}) => {
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -21,13 +21,7 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onShow
   
   return (
     <div className="stats-bar">
-      {/* <div className="logo-container">
-        <img
-          src={tool}
-          alt="Logo"
-          className="stats-bar-logo"
-        />
-      </div> */}
+
 
       <div className="stats-container"> 
         <div className="stats-bar__item">
@@ -78,7 +72,12 @@ const StatsBar = ({ wpm, cpm, accuracy, remainingTime, iskeyBoardEnabled, onShow
           title="View Letter Performance"
         
         >    {<img src={performace} alt="Performace" />}
-        </button>
+        </button> 
+         <button 
+                className="stats-bar__button keyboard-button"
+                onClick={() => setShowHelpOverlay(true)}
+                title="Help"
+          ><img src={helpIcon} alt="" /></button>
         {/* <button 
           className="stats-bar__button pause-button"
           onClick={onPause}
