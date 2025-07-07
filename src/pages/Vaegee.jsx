@@ -151,7 +151,13 @@ const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
 
   const completeGame = () => { 
     // First update all metrics 
-    if (currentTaskIndex == gameData.contents.length-1 && accuracy >=75 && timeTaken !=0) {  
+    if (
+      gameData &&
+      Array.isArray(gameData.contents) &&
+      currentTaskIndex == gameData.contents.length - 1 &&
+      accuracy >= 75 &&
+      timeTaken != 0
+    ) {
       console.log("Hi m this complete game");
       storeTaskCompletion();
       setGameState("completed");
@@ -954,7 +960,7 @@ const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
 
   // Timer effect - changed to countdown
   useEffect(() => {
-    if (isTyping && !isCompleted && !isTimeUp) {
+    if (isTyping && !isCompleted && !isTimeUp && !showHelpOverlay) {
       timerRef.current = setInterval(() => {
         setRemainingTime((prev) => {
           if (prev <= 1) {
@@ -972,7 +978,7 @@ const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
         clearInterval(timerRef.current);
       }
     };
-  }, [isTyping, isCompleted, isTimeUp]); // Add dependencies here
+  }, [isTyping, isCompleted, isTimeUp, showHelpOverlay]); // Add showHelpOverlay to dependencies
 
   // Metrics update effect
   useEffect(() => {
@@ -1583,6 +1589,7 @@ const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
           currentLevelMistakes={currentLevelMistakes}
           currentLevelCorrect={currentLevelCorrect}
           performanceData={letters}
+          gameData={gameData}
         />
       )} 
       {showHelpOverlay && (

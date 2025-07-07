@@ -69,6 +69,13 @@ module.exports = (_, argv) => ({
       {
         test: /\.(css|s[ac]ss)$/i,
         use: ["style-loader", "css-loader", "postcss-loader"],
+      }, 
+       {
+        test: /\.(mp4|webm|ogg|mov|avi)$/i, // Match video files
+        type: "asset/resource",
+        generator: {
+          filename: "videos/[name][ext]", // Output video files to the "videos/" directory
+        },
       },
     ],
   },

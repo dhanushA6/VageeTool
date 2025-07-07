@@ -5,7 +5,7 @@ import lessDetailsIcon from '../images/lessdetails.png';
 import close from '../images/closeButton.png'
 // import { convertPerformanceDataToTamil } from '../utils/tamilMapping';
 
-const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCorrect = {}, performanceData = {} }) => {
+const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCorrect = {}, performanceData = {}, gameData }) => {
   const [selectedSeries, setSelectedSeries] = useState('vowels');
   const [showDetails, setShowDetails] = useState(false);
 
@@ -174,6 +174,26 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
     );
   };
 
+  const renderOverallStats = () => {
+    if (!gameData) return null;
+    return (
+      <div className="overall-stats-row"  style={{ display: showDetails ? 'none' : '' }}>
+        <div className="overall-stat-box">
+          <div className="overall-stat-label">சராசரி சொல்/நிமிடம்</div>
+          <div className="overall-stat-value">{gameData.wpmAverage || '-'}</div>
+        </div>
+        <div className="overall-stat-box">
+          <div className="overall-stat-label">சராசரி ஏழுத்து/நிமிடம்</div>
+          <div className="overall-stat-value">{gameData.cpmAverage || '-'}</div>
+        </div>
+        <div className="overall-stat-box">
+          <div className="overall-stat-label">சராசரி துல்லியம்</div>
+          <div className="overall-stat-value">{gameData.accuracyAverage ? `${gameData.accuracyAverage}%` : '-'}</div>
+        </div>
+      </div>
+    );
+  };
+
   const renderCurrentLevelStats = () => {
     const topMistakes = getTopLetters(currentLevelMistakes);
     const topCorrect = getTopLetters(currentLevelCorrect);
@@ -211,6 +231,7 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
             <div className="no-correct"> இல்லை</div>
           )}
         </div>
+       
       </div>
     );
   };
@@ -229,13 +250,13 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
             />
           </button>
           <h2>{tamilLabels.letterPerformance}</h2>
-          <div className="close-button" onClick={onClose}> 
+          <div className="close-button2" onClick={onClose}> 
             <img src={close} alt="close-button" />
           </div>
         </div>
         
         {renderCurrentLevelStats()}
-        
+        {renderOverallStats()}
         {showDetails && (
           <>
             <div className={`series-selector ${showDetails ? 'visible' : ''}`}>
@@ -299,9 +320,6 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
                 <span>50%</span>
                 <span>75%</span>
                 <span>100%</span>
-              </div>
-              <div className="legend-description">
-                {tamilLabels.hoverTip}
               </div>
             </div>
           </>

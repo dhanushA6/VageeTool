@@ -8,8 +8,8 @@ import HelpPage from "./pages/HelpPage";
 
 const App = () => {
   const [gameData, setGameData] = useState(null); 
-  const [userID, setUserID] = useState(123);
-  const [levelValue, setLevelValue] = useState(1);
+ const [userID, setUserID] = useState(1);
+  const [levelValue, setLevelValue] = useState(3); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const initialize = useRef(false);  
@@ -95,6 +95,9 @@ const App = () => {
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
+  if (!gameData || !Array.isArray(gameData.contents) || gameData.contents.length === 0) {
+    return <div>No data available for this level/user/mode.</div>;
+  }
 
   return (
     <Router
