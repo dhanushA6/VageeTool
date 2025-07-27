@@ -13,7 +13,7 @@ const App = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const initialize = useRef(false);  
-  const [mode, setMode] = useState('freeplay'); 
+  const [mode, setMode] = useState('activity'); 
 
 
   
@@ -70,7 +70,7 @@ const App = () => {
 
       console.log("Level:", level, "Mode:", mode, "UserID:", uid);
       const queryString = new URLSearchParams(payload).toString();
-      const response = await fetch(`https://academy.karky.in:6128/thamba/game/vaegee/play?${queryString}`);
+      const response = await fetch(`https://thambaa.karky.in:6128/thamba/game/vaegee/play?${queryString}`);
       const data = await response.json();
 
       // Parse the letters data if it exists

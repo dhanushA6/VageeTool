@@ -1348,7 +1348,7 @@ const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
               letters: JSON.stringify(letters)
             });
 
-            const updateResponse = await fetch('https://academy.karky.in:6128/thamba/game/vaegee/update', {
+            const updateResponse = await fetch('https://thambaa.karky.in:6128/thamba/game/vaegee/update', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -1368,7 +1368,7 @@ const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
             };
             
             const queryString = new URLSearchParams(payload).toString();
-            const response = await fetch(`https://academy.karky.in:6128/thamba/game/vaegee/play?${queryString}`);
+            const response = await fetch(`https://thambaa.karky.in:6128/thamba/game/vaegee/play?${queryString}`);
             
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
@@ -1465,7 +1465,7 @@ const Vaegee = ({ gameData, userID, mode, level, onGameDataUpdate }) => {
         letters: JSON.stringify(letters)
       });
 
-      const response = await fetch('https://academy.karky.in:6128/thamba/game/vaegee/update', {
+      const response = await fetch('https://thambaa.karky.in:6128/thamba/game/vaegee/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',

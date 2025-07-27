@@ -174,25 +174,40 @@ const PerformanceOverlay = ({ onClose, currentLevelMistakes = {}, currentLevelCo
     );
   };
 
-  const renderOverallStats = () => {
-    if (!gameData) return null;
-    return (
-      <div className="overall-stats-row"  style={{ display: showDetails ? 'none' : '' }}>
-        <div className="overall-stat-box">
-          <div className="overall-stat-label">சராசரி சொல்/நிமிடம்</div>
-          <div className="overall-stat-value">{gameData.wpmAverage || '-'}</div>
-        </div>
-        <div className="overall-stat-box">
-          <div className="overall-stat-label">சராசரி ஏழுத்து/நிமிடம்</div>
-          <div className="overall-stat-value">{gameData.cpmAverage || '-'}</div>
-        </div>
-        <div className="overall-stat-box">
-          <div className="overall-stat-label">சராசரி துல்லியம்</div>
-          <div className="overall-stat-value">{gameData.accuracyAverage ? `${gameData.accuracyAverage}%` : '-'}</div>
+const renderOverallStats = () => {
+  if (!gameData) return null;
+
+  const formatValue = (value) => {
+    const num = Number(value);
+    return isNaN(num) ? '-' : num.toFixed(2);
+  };
+
+  return (
+    <div className="overall-stats-row" style={{ display: showDetails ? 'none' : '' }}>
+      <div className="overall-stat-box">
+        <div className="overall-stat-label">சராசரி சொல்/நிமிடம்</div>
+        <div className="overall-stat-value">
+          {formatValue(gameData.wpmAverage)}
         </div>
       </div>
-    );
-  };
+      <div className="overall-stat-box">
+        <div className="overall-stat-label">சராசரி எழுத்து/நிமிடம்</div>
+        <div className="overall-stat-value">
+          {formatValue(gameData.cpmAverage)}
+        </div>
+      </div>
+      <div className="overall-stat-box">
+        <div className="overall-stat-label">சராசரி துல்லியம்</div>
+        <div className="overall-stat-value">
+          {gameData.accuracyAverage != null && !isNaN(Number(gameData.accuracyAverage))
+            ? `${Number(gameData.accuracyAverage).toFixed(2)}%`
+            : '-'}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
   const renderCurrentLevelStats = () => {
     const topMistakes = getTopLetters(currentLevelMistakes);
